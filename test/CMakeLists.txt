@@ -1,0 +1,12 @@
+find_package(Catch2 CONFIG REQUIRED)
+include(CTest)
+include(Catch)
+enable_testing()
+
+#set(PLATFORM_LINK_FLAGS "${PLATFORM_LINK_FLAGS} -fsanitize=undefined")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PLATFORM_LINK_FLAGS}")
+set(perfvect_tests_src main.cpp static_vector_test.cpp)
+#add_compile_options(-fsanitize=undefined)
+add_executable(perfvect_tests ${perfvect_tests_src})
+target_link_libraries(perfvect_tests Catch2::Catch2 perfvect)
+catch_discover_tests(perfvect_tests)
