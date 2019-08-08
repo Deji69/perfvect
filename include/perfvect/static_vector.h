@@ -345,7 +345,7 @@ public:
 		m_size = 0;
 	}
 
-	constexpr auto swap(static_vector& other) noexcept(noexcept(T().swap(T()))->void {
+	constexpr auto swap(static_vector& other) noexcept(noexcept(T().swap(T())))->void {
 		if (this == std::addressof(other)) return;
 		auto ptr = data();
 		auto otherPtr = other.data();
