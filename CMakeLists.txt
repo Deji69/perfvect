@@ -15,6 +15,11 @@ else()
 	add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+set(HEADERS ${HEADERS}
+	${PROJECT_SOURCE_DIR}/include/perfvect/static_vector.h
+	${PROJECT_SOURCE_DIR}/include/perfvect/small_vector.h
+	${PROJECT_SOURCE_DIR}/include/perfvect/auto_vector.h
+)
 add_library(perfvect INTERFACE)
 add_library(perfvect::perfvect ALIAS perfvect)
 target_include_directories(perfvect INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
