@@ -1,29 +1,61 @@
-cmake_minimum_required(VERSION 3.8)
-project(perfvect VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.8.0)
+
+##
+## Project
+##
+project(perfvect VERSION 0.1.0 LANGUAGES CXX)
+
+##
+## Include
+##
+
+##
+## Options
+##
+option(Perfvect_Testing "Build unit tests" ON)
+option(Perfvect_Install "Install CMake targets" ON)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 	message(" [INFO] VCPKG CMAKE_TOOLCHAIN_FILE = ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+##
+## Config
+##
+include(GNUInstallDirs)
 
-if(MSVC)
-	add_compile_options(/W4 /WX)
-else()
-	add_compile_options(-Wall -Wextra -pedantic -Werror)
+set(PERFVECT_TARGET_NAME                 ${PROJECT_NAME})
+set(PERFVECT_INCLUDE_BUILD_DIR           "${PROJECT_SOURCE_DIR}/include/")
+set(PERFVECT_INCLUDE_INSTALL_DIR         "${CMAKE_INSTALL_INCLUDEDIR}")
+set(PERFVECT_TARGETS_EXPORT_NAME         "${PROJECT_NAME}Targets")
+set(PERFVECT_CMAKE_CONFIG_DIR            "${CMAKE_CURRENT_BINARY_DIR}")
+set(PERFVECT_CMAKE_PROJECT_TARGETS_FILE  "${PERFVECT_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
+
+##
+## Target
+##
+add_library(${PERFVECT_TARGET_NAME} INTERFACE)
+add_library(${PROJECT_NAME}::${PERFVECT_TARGET_NAME} ALIAS ${PERFVECT_TARGET_NAME})
+target_compile_features(perfvect INTERFACE cxx_std_17)
+target_include_directories(${PERFVECT_TARGET_NAME} INTERFACE $<BUILD_INTERFACE:${PERFVECT_INCLUDE_BUILD_DIR}> $<INSTALL_INTERFACE:include>)
+
+##
+## Tests
+##
+include(CTest)
+if(BUILD_TESTING AND Perfvect_Testing)
+	enable_testing()
+	add_subdirectory(test)
 endif()
 
-set(HEADERS ${HEADERS}
-	${PROJECT_SOURCE_DIR}/include/perfvect/static_vector.h
-	${PROJECT_SOURCE_DIR}/include/perfvect/small_vector.h
-	${PROJECT_SOURCE_DIR}/include/perfvect/auto_vector.h
-)
-add_library(perfvect INTERFACE)
-add_library(perfvect::perfvect ALIAS perfvect)
-target_include_directories(perfvect INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-target_compile_features(perfvect INTERFACE cxx_std_17)
+##
+## Install
+##
+include(CMakePackageConfigHelpers)
 
-enable_testing()
-add_subdirectory(test)
+if(Perfvect_Install)
+	install(DIRECTORY ${PERFVECT_INCLUDE_BUILD_DIR} DESTINATION ${PERFVECT_INCLUDE_INSTALL_DIR})
+	export(TARGETS ${PERFECT_TARGET_NAME} NAMESPACE ${PROJECT_NAME}:: FILE ${PERFVECT_CMAKE_PROJECT_TARGETS_FILE})
+	install(TARGETS ${PERFVECT_TARGET_NAME} EXPORT ${PERFVECT_TARGETS_EXPORT_NAME} INCLUDES DESTINATION ${PERFVECT_INCLUDE_INSTALL_DIR})
+endif()

@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${vcpkgRoot}/x64-windows/include",
+                "${vcpkgRoot}/x86-windows/include",
+                "${vcpkgRoot}/x86-windows-static/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "windowsSdkVersion": "10.0.17763.0",
+            "compilerPath": "C:/dev/LLVM/bin/clang.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64",
+            "configurationProvider": "vector-of-bool.cmake-tools",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        },
+        {
+            "name": "WSL",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${vcpkgRoot}/x64-linux/include"
+            ],
+            "defines": [
+                "_DEBUG=1"
+            ],
+            "compilerPath": "/usr/bin/clang++",
+            "cppStandard": "c++17",
+            "cStandard": "c11",
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "databaseFilename": "build/test/perfvect_tests.pdb"
+            }
+        }
+    ],
+    "version": 4
+}

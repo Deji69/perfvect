@@ -4,7 +4,8 @@
 #include <iterator>
 #include <type_traits>
 
-namespace perfvect::detail {
+namespace perfvect {
+namespace detail {
 
 template<typename T>
 class iterator {
@@ -118,5 +119,5 @@ template<typename T>
 constexpr bool is_iterator_v = is_iterator<T>::value;
 
 }
-
+}
 #endif

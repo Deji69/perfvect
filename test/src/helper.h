@@ -61,12 +61,12 @@ struct TestStruct {
 	mutable bool wasCopyAssignedFrom = false;
 };
 
-inline unsigned int TestStruct::constructed = 0;
-inline unsigned int TestStruct::assigned = 0;
-inline unsigned int TestStruct::destructed = 0;
-inline unsigned int TestStruct::moveConstructed = 0;
-inline unsigned int TestStruct::moveAssigned = 0;
-inline unsigned int TestStruct::copyConstructed = 0;
-inline unsigned int TestStruct::copyAssigned = 0;
+unsigned int TestStruct::constructed = 0;
+unsigned int TestStruct::assigned = 0;
+unsigned int TestStruct::destructed = 0;
+unsigned int TestStruct::moveConstructed = 0;
+unsigned int TestStruct::moveAssigned = 0;
+unsigned int TestStruct::copyConstructed = 0;
+unsigned int TestStruct::copyAssigned = 0;
 
 #endif

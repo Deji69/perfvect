@@ -51,14 +51,16 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 
 	SECTION("move construction moves contained buffers")
 	{
-		static_vector<std::string, 2> vec;
-		vec.push_back("test1"s);
-		vec.push_back("test2"s);
-		auto buff1 = vec[0].data();
-		auto buff2 = vec[1].data();
-		static_vector<std::string, 2> other(std::move(vec));
-		CHECK(other[0].data() == buff1);
-		CHECK(other[1].data() == buff2);
+		static_vector<TestStruct, 2> vec(2, TestStruct{});
+		TestStruct::setup();
+		static_vector<TestStruct, 2> other(std::move(vec));
+		CHECK(other.size() == 2);
+		CHECK(TestStruct::constructed == 2);
+		CHECK(TestStruct::moveConstructed == 2);
+		CHECK(other[0].wasMoveConstructed);
+		CHECK(other[1].wasMoveConstructed);
+		CHECK(vec[0].wasMoveConstructedFrom);
+		CHECK(vec[1].wasMoveConstructedFrom);
 	}
 
 	SECTION("sanity check capacity methods")

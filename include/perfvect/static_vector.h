@@ -2,6 +2,7 @@
 #define PERFVECT_STATIC_VECTOR_H
 
 #include "iterator.h"
+#include <cstddef>
 #include <vector>
 #include <new>
 #include <variant>
@@ -32,8 +33,12 @@ public:
 
 public:
 	constexpr static_vector() noexcept = default;
-	constexpr static_vector(static_vector&&) noexcept = default;
-	constexpr static_vector(const static_vector&) = default;
+	constexpr static_vector(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
+		swap(other);
+	}
+	constexpr static_vector(const static_vector& other) {
+		assign(other.begin(), other.end());
+	}
 	constexpr static_vector(size_type count, const value_type& value) {
 		assign(count, value);
 	}
@@ -45,7 +50,7 @@ public:
 
 	// operations
 
-	constexpr auto& operator=(static_vector&& other) noexcept {
+	constexpr auto& operator=(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
 		swap(other);
 		return *this;
 	}
@@ -345,7 +350,7 @@ public:
 		m_size = 0;
 	}
 
-	constexpr auto swap(static_vector& other) noexcept(noexcept(T().swap(T())))->void {
+	constexpr auto swap(static_vector& other) noexcept(std::is_nothrow_swappable_v<T>)->void {
 		if (this == std::addressof(other)) return;
 		auto ptr = data();
 		auto otherPtr = other.data();

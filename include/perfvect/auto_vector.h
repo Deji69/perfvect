@@ -27,11 +27,11 @@ namespace perfvect {
 
 template<typename StaticVec, typename DynamicVec, std::size_t DynamicCapacity = 64>
 class auto_vector {
-	static_assert(StaticVec::value_type == DynamicVec::value_type);
-
 	constexpr static auto StaticCapacity = StaticVec().max_size();
 
 	using variant = std::variant<StaticVec, DynamicVec>;
+
+	static_assert(StaticVec::value_type == DynamicVec::value_type, "value_type of StaticVec and DynamicVec must be the same");
 	
 public:
 	using value_type = StaticVec::value_type;
