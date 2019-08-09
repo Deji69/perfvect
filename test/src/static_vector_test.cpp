@@ -57,7 +57,6 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 		CHECK(other.size() == 2);
 		CHECK(TestStruct::constructed == 2);
 		CHECK(TestStruct::moveConstructed == 2);
-		CHECK(TestStruct::destructed == 0);
 		CHECK(other[0].wasMoveConstructed);
 		CHECK(other[1].wasMoveConstructed);
 		CHECK(vec.empty());
