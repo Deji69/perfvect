@@ -39,7 +39,8 @@
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "databaseFilename": "build/test/perfvect_tests.pdb"
-            }
+            },
+            "configurationProvider": "vector-of-bool.cmake-tools"
         }
     ],
     "version": 4
