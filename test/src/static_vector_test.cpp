@@ -49,7 +49,7 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 		CHECK(copy[2] == 3);
 	}
 
-	SECTION("move construction moves contained buffers")
+	SECTION("move construction swaps contained buffers")
 	{
 		static_vector<TestStruct, 2> vec(2, TestStruct{});
 		TestStruct::setup();
@@ -57,10 +57,10 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 		CHECK(other.size() == 2);
 		CHECK(TestStruct::constructed == 2);
 		CHECK(TestStruct::moveConstructed == 2);
+		CHECK(TestStruct::destructed == 0);
 		CHECK(other[0].wasMoveConstructed);
 		CHECK(other[1].wasMoveConstructed);
-		CHECK(vec[0].wasMoveConstructedFrom);
-		CHECK(vec[1].wasMoveConstructedFrom);
+		CHECK(vec.empty());
 	}
 
 	SECTION("sanity check capacity methods")
