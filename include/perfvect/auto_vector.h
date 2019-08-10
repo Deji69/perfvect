@@ -27,21 +27,21 @@ namespace perfvect {
 
 template<typename StaticVec, typename DynamicVec, std::size_t DynamicCapacity = 64>
 class auto_vector {
-	constexpr static auto StaticCapacity = StaticVec().max_size();
+	constexpr static auto StaticCapacity = std::tuple_size_v<StaticVec>;
 
 	using variant = std::variant<StaticVec, DynamicVec>;
 
-	static_assert(StaticVec::value_type == DynamicVec::value_type, "value_type of StaticVec and DynamicVec must be the same");
+	static_assert(std::is_same_v<typename StaticVec::value_type, typename DynamicVec::value_type>, "value_type of StaticVec and DynamicVec must be the same");
 	
 public:
-	using value_type = StaticVec::value_type;
-	using allocator_type = Allocator;
+	using value_type = typename StaticVec::value_type;
+	using allocator_type = typename DynamicVec::allocator_type;
 	using size_type = typename DynamicVec::size_type;
 	using difference_type = typename DynamicVec::difference_type;
 	using reference = value_type&;
 	using const_reference = const value_type&;
-	using pointer = typename std::allocator_traits<Allocator>::pointer;
-	using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
+	using pointer = typename std::allocator_traits<allocator_type>::pointer;
+	using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
 	using iterator = typename detail::iterator<value_type>;
 	using const_iterator = typename detail::iterator<const value_type>;
 	using reverse_iterator = std::reverse_iterator<iterator>;
@@ -49,26 +49,23 @@ public:
 
 public:
 	constexpr auto_vector() noexcept(std::is_nothrow_constructible_v<value_type>) :
-		m_data(std::in_place_type_t<StaticVec>{})
-	{}
+		m_data(std::in_place_type_t<StaticVec>{}) {}
 	
-	constexpr auto_vector(const auto_vector& other) : m_data(other.data)
-	{}
+	constexpr auto_vector(const auto_vector& other) : m_data(other.m_data) {}
 	
-	constexpr auto_vector(auto_vector&& other) noexcept : m_data(std::move(other.data))
-	{}
+	constexpr auto_vector(auto_vector&& other) noexcept : m_data(std::move(other.m_data)) {}
 
-	constexpr auto_vector(DynamicVec&& other) noexcept : m_data(other)
-	{}
+	constexpr auto_vector(DynamicVec&& other) noexcept : m_data(other) {}
 
-	template<typename... Args>
-	constexpr explicit auto_vector(Args&&... args) :
-		m_data(std::in_place_type_t<StaticVec>{}, std::forward<Args>(args)...)
-	{}
+	template<
+		typename Arg,
+		typename... Args,
+		std::enable_if_t<sizeof...(Args) != 0 || !(std::is_same_v<std::remove_reference_t<Arg>, DynamicVec> || std::is_same_v<std::remove_reference_t<Arg>, auto_vector>), int> = 0>
+	constexpr explicit auto_vector(Arg&& arg, Args&&... args) :
+		m_data(std::in_place_type_t<StaticVec>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {}
 	
 	constexpr auto_vector(std::initializer_list<value_type> init) :
-		m_data(std::in_place_type_t<StaticVec>{}, init)
-	{}
+		m_data(std::in_place_type_t<StaticVec>(), init) {}
 
 	// operations
 
@@ -118,7 +115,7 @@ public:
 	}
 
 	[[nodiscard]] constexpr auto end() const noexcept {
-		return const_iterator(data() + m_size);
+		return is_static() ? as_static().end() : as_dynamic().end();
 	}
 
 	[[nodiscard]] constexpr auto rbegin() noexcept {
@@ -315,16 +312,8 @@ public:
 		if (is_static()) as_static().clear();
 		else as_dynamic().clear();
 	}
-	
-	constexpr auto data() {
-		return is_static() ? as_static().data() : as_dynamic().data();
-	}
 
-	constexpr auto data() const {
-		return is_static() ? as_static().data() : as_dynamic().data();
-	}
-
-	constexpr auto swap(auto_vector& other) noexcept(noexcept(m_data.swap(other.m_data))->void {
+	constexpr auto swap(auto_vector& other) noexcept(m_data.swap(other.m_data))->void {
 		m_data.swap(other.m_data);
 	}
 
@@ -334,14 +323,14 @@ private:
 		auto vec = DynamicVec();
 		vec.reserve(reserve_size > DynamicCapacity ? reserve_size : DynamicCapacity);
 		vec.assign(std::make_move_iterator(myvec.begin()), std::make_move_iterator(myvec.end()));
-		return m_data.emplace(std::move(vec));
+		return m_data.template emplace<DynamicVec>(std::move(vec));
 	}
 
 	auto& convert_to_static() {
 		auto& myvec = as_dynamic();
 		auto vec = StaticVec();
 		vec.assign(std::make_move_iterator(myvec.begin()), std::make_move_iterator(myvec.end()));
-		return m_data.emplace(std::move(vec));
+		return m_data.template emplace<StaticVec>(std::move(vec));
 	}
 
 	[[nodiscard]] constexpr auto& as_static() noexcept {
@@ -361,7 +350,7 @@ private:
 	}
 
 private:
-	std::variant<StaticVec, DynamicVec> m_data;
+	variant m_data;
 };
 
 }

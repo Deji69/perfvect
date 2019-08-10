@@ -32,7 +32,7 @@ public:
 	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 public:
-	constexpr static_vector() noexcept = default;
+	constexpr static_vector() noexcept : m_data() {}
 	constexpr static_vector(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
 		swap(other);
 	}
@@ -47,6 +47,10 @@ public:
 		assign(first, last);
 	}
 	constexpr static_vector(std::initializer_list<value_type> init) : static_vector(init.begin(), init.end()) {}
+	
+	~static_vector() noexcept(std::is_trivially_destructible_v<T>) {
+		destruct_elements(0);
+	}
 
 	// operations
 
@@ -407,5 +411,8 @@ private:
 };
 
 }
+
+template<typename T, std::size_t Capacity>
+class std::tuple_size<perfvect::static_vector<T, Capacity>> : public std::integral_constant<std::size_t, Capacity> {};
 
 #endif

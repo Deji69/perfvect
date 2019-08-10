@@ -119,6 +119,14 @@ TEST_CASE("static_vector::static_vector(std::initialier_list)") {
 	CHECK(vec[3] == 4);
 }
 
+TEST_CASE("static_vector::~static_vector()") {
+	{
+		static_vector<TestStruct, 4> vec({1, 2, 3, 4});
+		TestStruct::setup();
+	}
+	CHECK(TestStruct::destructed == 4);
+}
+
 TEST_CASE("static_vector::operator=(static_vector&&)") {
 	SECTION("swapped when lengths are equal") {
 		static_vector<TestStruct, 2> vec{1, 2};
