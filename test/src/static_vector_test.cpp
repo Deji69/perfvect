@@ -152,13 +152,16 @@ TEST_CASE("static_vector::operator=(static_vector&&)") {
 
 	SECTION("destructs uninitialised elements") {
 		static_vector<TestStruct, 2> other{1, 2};
+
 		{
 			static_vector<TestStruct, 2> vec;
 			TestStruct::setup();
 			other = std::move(vec);
+			CHECK(other.size() == 0);
+			CHECK(TestStruct::destructed == 2);
+			TestStruct::setup();
 		}
 
-		CHECK(other.size() == 0);
 		CHECK(TestStruct::destructed == 2);
 	}
 }
