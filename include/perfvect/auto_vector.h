@@ -50,72 +50,83 @@ public:
 public:
 	constexpr auto_vector() noexcept(std::is_nothrow_constructible_v<value_type>) :
 		m_data(std::in_place_type_t<StaticVec>{}) {}
+
+	constexpr auto_vector(const auto_vector& other) {
+		assign_vec(other);
+	}
 	
-	constexpr auto_vector(const auto_vector& other) : m_data(other.m_data) {}
+	template<typename OtherStaticVec, typename OtherDynamicVec, std::size_t OtherDynamicCapacity>
+	constexpr auto_vector(const auto_vector<OtherStaticVec, OtherDynamicVec, OtherDynamicCapacity>& other) {
+		assign(other);
+	}
 	
 	constexpr auto_vector(auto_vector&& other) noexcept : m_data(std::move(other.m_data)) {}
 
 	constexpr auto_vector(DynamicVec&& other) noexcept : m_data(other) {}
 
-	template<
-		typename Arg,
-		typename... Args,
-		std::enable_if_t<sizeof...(Args) != 0 || !(std::is_same_v<std::remove_reference_t<Arg>, DynamicVec> || std::is_same_v<std::remove_reference_t<Arg>, auto_vector>), int> = 0>
-	constexpr explicit auto_vector(Arg&& arg, Args&&... args) :
-		m_data(std::in_place_type_t<StaticVec>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
+	constexpr auto_vector(InputIt first, InputIt last) {
+		assign(first, last);
+	}
+
+	explicit constexpr auto_vector(size_type count, const value_type& value = value_type()) {
+		assign(count, value);
+	}
 	
-	constexpr auto_vector(std::initializer_list<value_type> init) :
-		m_data(std::in_place_type_t<StaticVec>(), init) {}
+	constexpr auto_vector(std::initializer_list<value_type> init) {
+		assign(init);
+	}
 
 	// operations
 
-	constexpr auto& operator=(auto_vector&& other) noexcept {
-		m_data = other.m_data;
+	constexpr auto& operator=(auto_vector&& other) {
+		assign(other);
 		return *this;
 	}
 
 	constexpr auto& operator=(const auto_vector& other) {
-		m_data = other.m_data;
+		assign(other);
 		return *this;
 	}
 
 	constexpr auto& operator=(std::initializer_list<value_type> ilist) {
-		if (is_static()) as_static() = ilist;
-		else as_dynamic() = ilist;
+		assign(ilist);
 		return *this;
 	}
 
-	template<typename InputIt, typename = std::enable_if_t<!std::is_integral_v<InputIt>>>
+	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
 	constexpr auto assign(InputIt first, InputIt last) {
-		if (is_static()) as_static().assign(first, last);
-		else as_dynamic().assign(first, last);
+		assign_vec(std::distance(first, last), first, last);
 	}
 
 	constexpr auto assign(std::initializer_list<value_type> ilist) {
-		assign(ilist.begin(), ilist.end());
+		assign_vec(ilist.size(), ilist.begin(), ilist.end());
 	}
 
 	constexpr auto assign(size_type count, const value_type& value) {
-		if (is_static()) as_static().assign(count, value);
-		else as_dynamic().assign(count, value);
+		assign_vec(count, count, value);
 	}
 
 	// iterators
 
-	[[nodiscard]] constexpr auto begin() noexcept {
-		return is_static() ? as_static().begin() : as_dynamic().begin();
+	[[nodiscard]] constexpr auto begin() noexcept->iterator {
+		return is_static() ? as_static().begin() : iterator(&*as_dynamic().begin());
 	}
 
-	[[nodiscard]] constexpr auto begin() const noexcept {
-		return const_iterator(data());
+	[[nodiscard]] constexpr auto begin() const noexcept->const_iterator {
+		return is_static() ? as_static().cbegin() : const_iterator(&*as_dynamic().cbegin());
 	}
 
-	[[nodiscard]] constexpr auto end() noexcept {
-		return is_static() ? as_static().end() : as_dynamic().end();
+	[[nodiscard]] constexpr auto end() noexcept->iterator {
+		if (is_static()) return as_static.end();
+		auto& vec = as_dynamic();
+		return iterator(vec.data() + vec.size());
 	}
 
-	[[nodiscard]] constexpr auto end() const noexcept {
-		return is_static() ? as_static().end() : as_dynamic().end();
+	[[nodiscard]] constexpr auto end() const noexcept->const_iterator {
+		if (is_static()) return as_static().cend();
+		auto& vec = as_dynamic();
+		return const_iterator(vec.data() + vec.size());
 	}
 
 	[[nodiscard]] constexpr auto rbegin() noexcept {
@@ -134,11 +145,11 @@ public:
 		return const_reverse_iterator(begin());
 	}
 
-	[[nodiscard]] constexpr auto cbegin() const noexcept {
+	[[nodiscard]] constexpr auto cbegin() const noexcept->const_iterator {
 		return begin();
 	}
 
-	[[nodiscard]] constexpr auto cend() const noexcept {
+	[[nodiscard]] constexpr auto cend() const noexcept->const_iterator {
 		return end();
 	}
 
@@ -313,11 +324,39 @@ public:
 		else as_dynamic().clear();
 	}
 
-	constexpr auto swap(auto_vector& other) noexcept(m_data.swap(other.m_data))->void {
+	constexpr auto swap(auto_vector& other) noexcept(noexcept(m_data.swap(other.m_data)))->void {
 		m_data.swap(other.m_data);
 	}
 
 private:
+	template<typename OtherStaticVec, typename OtherDynamicVec, std::size_t OtherDynamicCapacity>
+	auto assign_vec(const auto_vector<OtherStaticVec, OtherDynamicVec, OtherDynamicCapacity>& other) {
+		assign_vec(other.size(), other.cbegin(), other.cend());
+	}
+
+	template<typename... Args>
+	auto assign_vec(size_type size, Args&&... args) {
+		if (size > StaticCapacity)
+			assign_dynamic(size, std::forward<Args>(args)...);
+		else
+			assign_static(std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	auto& assign_static(Args&&... args) {
+		auto& vec = m_data.template emplace<StaticVec>();
+		vec.assign(std::forward<Args>(args)...);
+		return vec;
+	}
+
+	template<typename... Args>
+	auto& assign_dynamic(size_type reserve_size = 0, Args&&... args) {
+		auto& vec = m_data.template emplace<DynamicVec>();
+		vec.reserve(reserve_size > DynamicCapacity ? reserve_size : DynamicCapacity);
+		vec.assign(std::forward<Args>(args)...);
+		return vec;
+	}
+
 	auto& convert_to_dynamic(size_type reserve_size = 0) {
 		auto& myvec = as_static();
 		auto vec = DynamicVec();
@@ -326,7 +365,7 @@ private:
 		return m_data.template emplace<DynamicVec>(std::move(vec));
 	}
 
-	auto& convert_to_static() {
+	auto& convert_to_static() noexcept(std::is_nothrow_move_assignable_v<value_type>) {
 		auto& myvec = as_dynamic();
 		auto vec = StaticVec();
 		vec.assign(std::make_move_iterator(myvec.begin()), std::make_move_iterator(myvec.end()));
