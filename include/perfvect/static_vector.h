@@ -74,7 +74,7 @@ public:
 		std::fill_n(data(), count, value);
 	}
 
-	template<typename InputIt, typename = std::enable_if_t<!std::is_integral_v<InputIt>>>
+	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
 	constexpr auto assign(InputIt first, InputIt last) {
 		auto count = static_cast<size_type>(last - first);
 		
