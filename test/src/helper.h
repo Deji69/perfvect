@@ -37,6 +37,7 @@ struct TestStruct {
 	~TestStruct() { ++destructed; }
 
 	auto operator=(TestStruct&& other) noexcept->TestStruct& {
+		++assigned;
 		++moveAssigned;
 		value = other.value;
 		wasMoveAssigned = true;
@@ -45,6 +46,7 @@ struct TestStruct {
 	}
 
 	auto operator=(const TestStruct& other) noexcept->TestStruct& {
+		++assigned;
 		++copyAssigned;
 		value = other.value;
 		wasCopyAssigned = true;

@@ -20,6 +20,7 @@ public:
 	using value_type = T;
 	using difference_type = ptrdiff_t;
 	using pointer = T*;
+	using ptr_traits = std::pointer_traits<pointer>;
 	using reference = T&;
 
 	constexpr iterator() noexcept = default;
