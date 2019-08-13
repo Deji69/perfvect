@@ -27,7 +27,11 @@ include(Catch)
 ##
 ## Build
 ##
-set(perfvect_tests_src "src/main.cpp" "src/static_vector_test.cpp" "src/small_vector_test.cpp")
+set(perfvect_tests_src
+	"src/helper.h"
+	"src/main.cpp"
+	"src/static_vector_test.cpp"
+	"src/small_vector_test.cpp")
 add_executable(perfvect_tests ${perfvect_tests_src})
 target_link_libraries(perfvect_tests Catch2::Catch2 ${PERFVECT_TARGET_NAME})
 catch_discover_tests(perfvect_tests)
