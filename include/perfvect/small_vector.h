@@ -221,7 +221,7 @@ public:
 
 	auto shrink_to_fit() {
 		if (is_static()) return;
-		if (size() < m_staticVec.capacity()) {
+		if (size() <= m_staticVec.capacity()) {
 			convert_to_static();
 		}
 		else {
