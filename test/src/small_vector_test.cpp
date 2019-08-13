@@ -274,8 +274,8 @@ TEST_CASE("small_vector::begin(), small_vector::end()") {
 		}
 
 		SECTION("dynamic variant") {
-			auto it = stat.begin() + 4;
-			CHECK(it == stat.end());
+			auto it = dyn.begin() + 4;
+			CHECK(it == dyn.end());
 		}
 	}
 }
@@ -311,8 +311,8 @@ TEST_CASE("small_vector::rbegin(), small_vector::rend()") {
 		}
 
 		SECTION("dynamic variant") {
-			auto it = stat.rbegin() + 4;
-			CHECK(it == stat.rend());
+			auto it = dyn.rbegin() + 4;
+			CHECK(it == dyn.rend());
 		}
 	}
 }
@@ -348,8 +348,8 @@ TEST_CASE("small_vector::cbegin(), small_vector::cend()") {
 		}
 
 		SECTION("dynamic variant") {
-			auto it = stat.cbegin() + 4;
-			CHECK(it == stat.cend());
+			auto it = dyn.cbegin() + 4;
+			CHECK(it == dyn.cend());
 		}
 	}
 }
@@ -385,8 +385,8 @@ TEST_CASE("small_vector::crbegin(), small_vector::crend()") {
 		}
 
 		SECTION("dynamic variant") {
-			auto it = stat.crbegin() + 4;
-			CHECK(it == stat.crend());
+			auto it = dyn.crbegin() + 4;
+			CHECK(it == dyn.crend());
 		}
 	}
 }
