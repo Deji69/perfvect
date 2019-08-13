@@ -330,7 +330,7 @@ protected:
 
 	template<typename... Args>
 	auto assign_vec(size_type size, Args&&... args) {
-		if (size > m_staticVec.capacity())
+		if (is_dynamic() || size > m_staticVec.capacity())
 			assign_dynamic(size, std::forward<Args>(args)...);
 		else
 			assign_static(std::forward<Args>(args)...);
