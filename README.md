@@ -10,12 +10,6 @@ This library contains 2 container types, `static_vector` and `small_vector`. The
 
 A variably sized array container with a fixed capacity, free of allocations.
 
-### `perfvect::auto_vector<StaticT, DynamicT, DynamicCapacity>`
-
-A wrapper for a `std::variant` capable of holding one of two different vector types, `StaticT` which is treated as a fixed capacity vector, and `DynamicT` which is used once the size exceeds the fixed capacity. The capacity of `StaticT` is deduced via `std::tuple_size_v<StaticT>`, which is specialised for `std::tuple`, `std::array` and `perfvect::static_vector`.
-
-On allocating the `DynamicT` vector, `.reserve` is called with at least `DynamicCapacity` or higher if necessary for additional elements.
-
 ### `perfvect::small_vector<T, StaticCapacity = 16, DynamicCapacity = StaticCapacity>`
 
 A vector-interface storing both a `perfvect::static_vector` for static storage and a `std::vector` for dynamic storage. The static storage is used until the number of elements grows above `StaticCapacity`. When the number of elements exceeds that, they are moved to `std::vector` which is given a starting capacity of `DynamicCapacity`.
