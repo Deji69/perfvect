@@ -391,7 +391,7 @@ protected:
 	bool m_isStatic = true;
 };
 
-template<typename T, std::size_t StaticCapacity = 16, std::size_t DynamicCapacity = 32, typename Allocator = std::allocator<T>>
+template<typename T, std::size_t StaticCapacity = 16, std::size_t DynamicCapacity = StaticCapacity, typename Allocator = std::allocator<T>>
 class small_vector : public small_vector_base<T, Allocator> {
 	using base_t = small_vector_base<T, Allocator>;
 	using StaticVec = static_vector<T, StaticCapacity>;
