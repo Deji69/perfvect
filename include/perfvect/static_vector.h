@@ -8,12 +8,6 @@
 #include <variant>
 #include <type_traits>
 
-#if _DEBUG
-#define PERFVECT_NODEBUG_NOEXCEPT
-#else
-#define PERFVECT_NODEBUG_NOEXCEPT noexcept
-#endif
-
 namespace perfvect {
 
 template<typename T>
