@@ -420,11 +420,11 @@ public:
 	
 	template<typename InputIt, typename = std::enable_if_t<!std::is_integral_v<InputIt>>>
 	constexpr static_vector(InputIt first, InputIt last) : static_vector() {
-		assign(first, last);
+		base_t::assign(first, last);
 	}
 	
 	constexpr static_vector(size_type count, const value_type& value) : static_vector() {
-		assign(count, value);
+		base_t::assign(count, value);
 	}
 	
 	constexpr static_vector(std::initializer_list<value_type> init) : static_vector(init.begin(), init.end()) {}
@@ -445,12 +445,12 @@ public:
 	}
 
 	constexpr auto& operator=(const static_vector& other) {
-		assign(other.begin(), other.end());
+		base_t::assign(other.begin(), other.end());
 		return *this;
 	}
 
 	constexpr auto& operator=(std::initializer_list<value_type> ilist) {
-		assign(ilist.begin(), ilist.end());
+		base_t::assign(ilist.begin(), ilist.end());
 		return *this;
 	}
 

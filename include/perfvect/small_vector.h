@@ -100,7 +100,7 @@ public:
 	}
 
 	[[nodiscard]] constexpr auto end() noexcept->iterator {
-		if (is_static()) return as_static.end();
+		if (is_static()) return as_static().end();
 		auto& vec = as_dynamic();
 		return iterator(vec.data() + vec.size());
 	}
@@ -234,41 +234,33 @@ public:
 
 	constexpr auto insert(const_iterator pos, const T& val)->iterator {
 		reserve(size() + 1);
-		++m_size;
 		return is_static() ? as_static().insert(pos, val) : as_dynamic().insert(pos, val);
 	}
 
 	constexpr auto insert(const_iterator pos, T&& val)->iterator {
 		reserve(size() + 1);
-		++m_size;
 		return is_static() ? as_static().insert(pos, val) : as_dynamic().insert(pos, val);
 	}
 
 	constexpr auto insert(const_iterator pos, const size_type count, const T& val) {
 		reserve(size() + count);
-		m_size += count;
 		return is_static() ? as_static().insert(pos, count, val) : as_dynamic().insert(pos, count, val);
 	}
 
 	template<typename Iter, typename = std::enable_if_t<detail::is_iterator_v<Iter>>>
 	auto insert(const_iterator pos, Iter first, Iter last)->iterator {
-		auto count = m_size + std::distance(first, last);
-		reserve(count);
-		m_size = count;
+		reserve(size() + std::distance(first, last));
 		return is_static() ? as_static().insert(pos, first, last) : as_dynamic().insert(pos, first, last);
 	}
 
 	constexpr auto insert(const_iterator pos, std::initializer_list<T> list) {
-		auto count = m_size + list.size();
-		reserve(count);
-		m_size = count;
+		reserve(size() + list.size());
 		return is_static() ? as_static().insert(pos, list) : as_dynamic().insert(pos, list);
 	}
 
 	template<typename... Args>
 	auto emplace(const_iterator pos, Args&&... args)->iterator {
 		reserve(size() + 1);
-		++m_size;
 		if (is_static()) return as_static().insert(pos, std::forward<Args>(args)...);
 		return as_dynamic().insert(pos, std::forward<Args>(args)...);
 	}
@@ -276,14 +268,12 @@ public:
 	template<typename... Args>
 	auto& emplace_back(Args&&... args) {
 		reserve(size() + 1);
-		++m_size;
 		if (is_static()) as_static().emplace_back(std::forward<Args>(args)...);
 		return as_dynamic().emplace_back(std::forward<Args>(args)...);
 	}
 
 	auto push_back(const T& val) {
 		reserve(size() + 1);
-		++m_size;
 		if (is_static()) as_static().push_back(val);
 		else as_dynamic().push_back(val);
 	}
@@ -295,13 +285,11 @@ public:
 	}
 
 	constexpr auto pop_back() {
-		--m_size;
 		if (is_static()) as_static().pop_back();
 		else as_dynamic().pop_back();
 	}
 
 	constexpr auto erase(const_iterator pos)->iterator {
-		--m_size;
 		return is_static() ? as_static().erase(pos) : as_dynamic().erase(pos);
 	}
 
@@ -309,13 +297,11 @@ public:
 		if (is_static()) {
 			auto& vec = as_static();
 			auto it = vec.erase(first, last);
-			m_size = vec.size();
 			return it;
 		}
 
 		auto& vec = as_dynamic();
 		auto it = vec.erase(first, last);
-		m_size = vec.size();
 		return it;
 	}
 
@@ -323,20 +309,17 @@ public:
 		reserve(count);
 		if (is_static()) as_static().resize(count);
 		else as_dynamic().resize(count);
-		m_size = count;
 	}
 
 	constexpr auto resize(size_type count, const T& value) {
 		reserve(count);
 		if (is_static()) as_static().resize(count, value);
 		else as_dynamic().resize(count, value);
-		m_size = count;
 	}
 
 	constexpr auto clear() {
 		if (is_static()) as_static().clear();
 		else as_dynamic().clear();
-		m_size = 0;
 	}
 
 protected:
@@ -362,7 +345,7 @@ protected:
 	}
 
 	template<typename... Args>
-	auto& assign_dynamic(size_type reserve_size = 0, Args&&... args) {
+	auto& assign_dynamic(size_type reserve_size, Args&&... args) {
 		if (!m_staticVec.empty()) m_staticVec.clear();
 		m_dynamicVec.reserve(reserve_size > m_minDynamicCapacity ? reserve_size : m_minDynamicCapacity);
 		m_dynamicVec.assign(std::forward<Args>(args)...);
@@ -437,10 +420,12 @@ public:
 
 	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
 	constexpr small_vector(InputIt first, InputIt last) : small_vector() {
-		assign(first, last);
+		base_t::assign(first, last);
 	}
 
-	constexpr small_vector(const small_vector& other) : small_vector() { assign_vec(other); }
+	constexpr small_vector(const small_vector& other) : small_vector() {
+		base_t::assign_vec(other);
+	}
 	
 	constexpr small_vector(small_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) : small_vector() {
 		swap(other);
@@ -448,43 +433,44 @@ public:
 	
 	template<std::size_t OtherStaticCapacity, std::size_t OtherDynamicCapacity, typename Alloc = std::allocator<T>>
 	constexpr small_vector(const small_vector<T, OtherStaticCapacity, OtherDynamicCapacity, Alloc>& other) : small_vector() {
-		assign(other);
+		base_t::assign(other);
 	}
 
 	template<typename Alloc>
-	constexpr small_vector(std::vector<T, Alloc>&& other) noexcept(std::is_nothrow_move_constructible_v<T>)
-		: m_data(other) {}
+	constexpr small_vector(std::vector<T, Alloc>&& other) noexcept(std::is_nothrow_move_constructible_v<T>) {
+		base_t::assign(other);
+	}
 
 	explicit constexpr small_vector(size_type count, const T& value = T()) : small_vector() {
-		assign(count, value);
+		base_t::assign(count, value);
 	}
 	
 	constexpr small_vector(std::initializer_list<T> init) : small_vector() {
-		assign(init);
+		base_t::assign(init);
 	}
 
 	// operations
 
 	constexpr auto& operator=(small_vector&& other) {
-		assign(other);
+		base_t::assign(other);
 		return *this;
 	}
 
 	constexpr auto& operator=(const small_vector& other) {
-		assign(other);
+		base_t::assign(other);
 		return *this;
 	}
 
 	constexpr auto& operator=(std::initializer_list<T> ilist) {
-		assign(ilist);
+		base_t::assign(ilist);
 		return *this;
 	}
 
 	// modifiers
 	constexpr auto swap(small_vector& other)->void {
-		m_staticVec.swap(other.m_staticVec);
-		m_dynamicVec.swap(other.m_dynamicVec);
-		std::swap(m_isStatic, other.m_isStatic);
+		base_t::m_staticVec.swap(other.m_staticVec);
+		base_t::m_dynamicVec.swap(other.m_dynamicVec);
+		std::swap(base_t::m_isStatic, other.m_isStatic);
 	}
 
 private:
