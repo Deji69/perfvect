@@ -45,25 +45,6 @@ public:
 	constexpr small_vector_base(StaticVec& staticStorage, size_type minDynamicCapacity) noexcept :
 		m_staticVec(staticStorage), m_minDynamicCapacity(minDynamicCapacity) {}
 
-	constexpr small_vector_base(const small_vector_base& other) { assign_vec(other); }
-	
-	constexpr small_vector_base(small_vector_base&& other) noexcept(std::is_nothrow_move_constructible_v<T>) :
-		m_data(std::move(other.m_data)) {}
-	
-	template<typename Alloc>
-	constexpr small_vector_base(const small_vector_base<T, Alloc>& other) {
-		assign(other);
-	}
-
-	template<typename Alloc>
-	constexpr small_vector_base(std::vector<T, Alloc>&& other) noexcept(std::is_nothrow_move_constructible_v<T>)
-		: m_data(other) {}
-
-	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
-	constexpr small_vector_base(InputIt first, InputIt last) {
-		assign(first, last);
-	}
-
 	explicit constexpr small_vector_base(size_type count, const T& value = T()) {
 		assign(count, value);
 	}
