@@ -363,7 +363,7 @@ protected:
 	constexpr auto destruct_elements(size_type from) {
 		const auto end_ptr = m_data + m_size;
 		for (auto ptr = m_data + from; ptr != end_ptr; ++ptr) {
-			ptr->~value_type();
+			std::destroy_at(std::addressof(*ptr));
 		}
 	}
 
