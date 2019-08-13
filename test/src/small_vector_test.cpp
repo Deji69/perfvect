@@ -390,3 +390,71 @@ TEST_CASE("small_vector::crbegin(), small_vector::crend()") {
 		}
 	}
 }
+
+TEST_CASE("small_vector::at(size_type)") {
+	auto stat = small_vector<int, 3>({1, 2, 3});
+	auto dyn  = small_vector<int, 2>({1, 2, 3});
+
+	SECTION("can access element") {
+		SECTION("static variant") {
+			CHECK(stat.at(0) == 1);
+			CHECK(stat.at(1) == 2);
+			CHECK(stat.at(2) == 3);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(dyn.at(0) == 1);
+			CHECK(dyn.at(1) == 2);
+			CHECK(dyn.at(2) == 3);
+		}
+	}
+
+	SECTION("invalid access throws std::out_of_range exception") {
+		SECTION("static variant") {
+			REQUIRE_THROWS_AS(stat.at(3), std::out_of_range);
+		}
+
+		SECTION("dynamic variant") {
+			REQUIRE_THROWS_AS(dyn.at(3), std::out_of_range);
+		}
+	}
+}
+
+TEST_CASE("small_vector::front()") {
+	auto stat = small_vector<int, 3>({1, 2, 3});
+	auto dyn = small_vector<int, 2>({1, 2, 3});
+	CHECK(stat.front() == 1);
+	CHECK(dyn.front() == 1);
+}
+
+TEST_CASE("small_vector::back()") {
+	auto stat = small_vector<int, 3>({1, 2, 3});
+	auto dyn = small_vector<int, 2>({1, 2, 3});
+	CHECK(stat.back() == 3);
+	CHECK(dyn.back() == 3);
+}
+
+TEST_CASE("small_vector::reserve(size_type)") {
+	auto vec = small_vector<int, 3, 6>({1, 2, 3});
+	vec.reserve(4);
+	CHECK(vec.is_dynamic());
+	CHECK(vec.capacity() == 6);
+	vec.reserve(8);
+	CHECK(vec.capacity() == 8);
+}
+
+TEST_CASE("small_vector::shrink_to_fit()") {
+	auto vec = small_vector<int, 2, 4>({1});
+	vec.shrink_to_fit();
+	CHECK(vec.capacity() == 2);
+	
+	vec = {1, 2, 3};
+	vec.shrink_to_fit();
+	REQUIRE(vec.is_dynamic());
+	CHECK(vec.capacity() >= 3);
+
+	vec = {1, 2};
+	vec.shrink_to_fit();
+	REQUIRE(vec.is_static());
+	CHECK(vec.capacity() == 2);
+}
