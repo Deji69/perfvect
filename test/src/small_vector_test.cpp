@@ -191,3 +191,202 @@ TEST_CASE("small_vector::swap(small_vector&&)") {
 	CHECK(vec2.capacity() == 4);
 	CHECK(vec2.is_dynamic());
 }
+
+TEST_CASE("small_vector::assign(size_type, const T&)") {
+	SECTION("fill assign empty static vector") {
+		small_vector<int, 3> vec;
+		vec.assign(3, 99);
+		CHECK(vec.is_static());
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
+
+	SECTION("fill assign non-empty static vector") {
+		small_vector<int, 3> vec{1, 2, 3};
+		vec.assign(3, 99);
+		CHECK(vec.is_static());
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
+
+	SECTION("fill assign empty dynamic vector") {
+		small_vector<int, 2> vec;
+		vec.assign(3, 99);
+		CHECK(vec.is_dynamic());
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
+
+	SECTION("fill assign non-empty dynamic vector") {
+		small_vector<int, 2> vec{1, 2, 3};
+		vec.assign(2, 99);
+		CHECK(vec.is_dynamic());
+		REQUIRE(vec.size() == 2);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+	}
+
+	SECTION("fill assign non-empty static to dynamic vector") {
+		small_vector<int, 2> vec{1, 2};
+		vec.assign(3, 99);
+		CHECK(vec.is_dynamic());
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
+}
+
+TEST_CASE("small_vector::begin(), small_vector::end()") {
+	small_vector<int, 3> stat({1, 2, 3});
+	small_vector<int, 3> dyn({1, 2, 3, 4});
+
+	SECTION("begin() returns iterator to front") {
+		SECTION("static variant") {
+			CHECK(*stat.begin() == 1);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*dyn.begin() == 1);
+		}
+	}
+
+	SECTION("end() returns iterator to one past back") {
+		SECTION("static variant") {
+			CHECK(*std::prev(stat.end()) == 3);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*std::prev(dyn.end()) == 4);
+		}
+	}
+
+	SECTION("can reach end() from begin()") {
+		SECTION("static variant") {
+			auto it = stat.begin() + 3;
+			CHECK(it == stat.end());
+		}
+
+		SECTION("dynamic variant") {
+			auto it = stat.begin() + 4;
+			CHECK(it == stat.end());
+		}
+	}
+}
+
+TEST_CASE("small_vector::rbegin(), small_vector::rend()") {
+	small_vector<int, 3> stat({1, 2, 3});
+	small_vector<int, 3> dyn({1, 2, 3, 4});
+
+	SECTION("rbegin() returns iterator to back") {
+		SECTION("static variant") {
+			CHECK(*stat.rbegin() == 3);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*dyn.rbegin() == 4);
+		}
+	}
+
+	SECTION("rend() returns iterator to one before front") {
+		SECTION("static variant") {
+			CHECK(*std::prev(stat.rend()) == 1);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*std::prev(dyn.rend()) == 1);
+		}
+	}
+
+	SECTION("can reach rend() from rbegin()") {
+		SECTION("static variant") {
+			auto it = stat.rbegin() + 3;
+			CHECK(it == stat.rend());
+		}
+
+		SECTION("dynamic variant") {
+			auto it = stat.rbegin() + 4;
+			CHECK(it == stat.rend());
+		}
+	}
+}
+
+TEST_CASE("small_vector::cbegin(), small_vector::cend()") {
+	small_vector<int, 3> stat({1, 2, 3});
+	small_vector<int, 3> dyn({1, 2, 3, 4});
+
+	SECTION("cbegin() returns iterator to front") {
+		SECTION("static variant") {
+			CHECK(*stat.cbegin() == 1);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*dyn.cbegin() == 1);
+		}
+	}
+
+	SECTION("cend() returns iterator to one past back") {
+		SECTION("static variant") {
+			CHECK(*std::prev(stat.cend()) == 3);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*std::prev(dyn.cend()) == 4);
+		}
+	}
+
+	SECTION("can reach cend() from cbegin()") {
+		SECTION("static variant") {
+			auto it = stat.cbegin() + 3;
+			CHECK(it == stat.cend());
+		}
+
+		SECTION("dynamic variant") {
+			auto it = stat.cbegin() + 4;
+			CHECK(it == stat.cend());
+		}
+	}
+}
+
+TEST_CASE("small_vector::crbegin(), small_vector::crend()") {
+	small_vector<int, 3> stat({1, 2, 3});
+	small_vector<int, 3> dyn({1, 2, 3, 4});
+
+	SECTION("crbegin() returns iterator to back") {
+		SECTION("static variant") {
+			CHECK(*stat.crbegin() == 3);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*dyn.crbegin() == 4);
+		}
+	}
+
+	SECTION("crend() returns iterator to one before front") {
+		SECTION("static variant") {
+			CHECK(*std::prev(stat.crend()) == 1);
+		}
+
+		SECTION("dynamic variant") {
+			CHECK(*std::prev(dyn.crend()) == 1);
+		}
+	}
+
+	SECTION("can reach crend() from crbegin()") {
+		SECTION("static variant") {
+			auto it = stat.crbegin() + 3;
+			CHECK(it == stat.crend());
+		}
+
+		SECTION("dynamic variant") {
+			auto it = stat.crbegin() + 4;
+			CHECK(it == stat.crend());
+		}
+	}
+}
