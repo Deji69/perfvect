@@ -223,6 +223,7 @@ public:
 		if (is_static()) return;
 		if (size() <= m_staticVec.capacity()) {
 			convert_to_static();
+			m_dynamicVec.clear();
 		}
 		else {
 			auto& vec = as_dynamic();
