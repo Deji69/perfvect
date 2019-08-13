@@ -16,8 +16,8 @@
 
 namespace perfvect {
 
-template<typename T, std::size_t Capacity>
-class static_vector {
+template<typename T>
+class static_vector_base {
 public:
 	using value_type = T;
 	using size_type = std::size_t;
@@ -31,35 +31,23 @@ public:
 	using reverse_iterator = std::reverse_iterator<iterator>;
 	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-public:
-	constexpr static_vector() noexcept : m_data() {}
-	constexpr static_vector(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
-		swap(other);
-	}
-	constexpr static_vector(const static_vector& other) {
-		assign(other.begin(), other.end());
-	}
-	constexpr static_vector(size_type count, const value_type& value) {
-		assign(count, value);
-	}
-	template<typename InputIt, typename = std::enable_if_t<!std::is_integral_v<InputIt>>>
-	constexpr static_vector(InputIt first, InputIt last) {
-		assign(first, last);
-	}
-	constexpr static_vector(std::initializer_list<value_type> init) : static_vector(init.begin(), init.end()) {}
+protected:
+	constexpr static_vector_base(pointer data, std::size_t capacity) noexcept
+		: m_data(data), m_capacity(capacity) {}
 	
-	~static_vector() noexcept(std::is_trivially_destructible_v<T>) {
+	~static_vector_base() noexcept(std::is_trivially_destructible_v<T>) {
 		destruct_elements(0);
 	}
 
+public:
 	// operations
 
-	constexpr auto& operator=(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
+	constexpr auto& operator=(static_vector_base&& other) noexcept(std::is_nothrow_swappable_v<T>) {
 		swap(other);
 		return *this;
 	}
 
-	constexpr auto& operator=(const static_vector& other) {
+	constexpr auto& operator=(const static_vector_base& other) {
 		assign(other.begin(), other.end());
 		return *this;
 	}
@@ -98,8 +86,8 @@ public:
 	}
 
 	constexpr auto fill(const value_type& value) {
-		m_size = Capacity;
-		std::fill_n(data(), Capacity, value);
+		m_size = m_capacity;
+		std::fill_n(data(), m_size, value);
 	}
 
 	// iterators
@@ -158,7 +146,6 @@ public:
 		if (m_size <= pos) {
 			throw std::out_of_range("invalid static_vector<T, N> subscript");
 		}
-
 		return data()[pos];
 	}
 	
@@ -166,25 +153,16 @@ public:
 		if (m_size <= pos) {
 			throw std::out_of_range("invalid static_vector<T, N> subscript");
 		}
-
 		return data()[pos];
 	}
 
-	[[nodiscard]] constexpr auto operator[](size_type pos) PERFVECT_NODEBUG_NOEXCEPT->reference {
-		#if _DEBUG
-			if (pos >= m_size)
-				throw std::out_of_range("static_vector subscript out of range");
-		#endif
-
+	[[nodiscard]] constexpr auto operator[](size_type pos) noexcept->reference {
+		check_range_error(pos);
 		return data()[pos];
 	}
 
-	[[nodiscard]] constexpr auto operator[](size_type pos) const PERFVECT_NODEBUG_NOEXCEPT->const_reference {
-		#if _DEBUG
-			if (pos >= m_size)
-				throw std::out_of_range("static_vector subscript out of range");
-		#endif
-
+	[[nodiscard]] constexpr auto operator[](size_type pos) const noexcept->const_reference {
+		check_range_error(pos);
 		return data()[pos];
 	}
 
@@ -221,7 +199,7 @@ public:
 	// capacity
 
 	[[nodiscard]] constexpr auto capacity() const noexcept {
-		return Capacity;
+		return m_capacity;
 	}
 
 	[[nodiscard]] constexpr auto size() const noexcept {
@@ -354,7 +332,7 @@ public:
 		m_size = 0;
 	}
 
-	constexpr auto swap(static_vector& other) noexcept(std::is_nothrow_swappable_v<T>)->void {
+	constexpr auto swap(static_vector_base& other) noexcept(std::is_nothrow_swappable_v<T>)->void {
 		if (this == std::addressof(other)) return;
 		auto ptr = data();
 		auto otherPtr = other.data();
@@ -379,7 +357,7 @@ public:
 		std::swap(m_size, other.m_size);
 	}
 
-private:
+protected:
 	constexpr auto get_address(size_type idx)->pointer {
 		return reinterpret_cast<pointer>(&m_data[idx]);
 	}
@@ -389,9 +367,9 @@ private:
 	}
 
 	constexpr auto destruct_elements(size_type from) {
-		auto base = data();
-		for (; from != m_size; ++from) {
-			(base + from)->~value_type();
+		const auto end_ptr = m_data + m_size;
+		for (auto ptr = m_data + from; ptr != end_ptr; ++ptr) {
+			ptr->~value_type();
 		}
 	}
 
@@ -400,14 +378,90 @@ private:
 		return new (get_address(pos)) value_type{std::forward<Args>(args)...};
 	}
 	
-	auto iterator_const_cast(const_iterator iter)->iterator
-	{
+	auto iterator_const_cast(const_iterator iter)->iterator {
 		return iterator(const_cast<T*>(&*iter));
 	}
 
-private:
-	alignas(T) std::byte m_data[Capacity][sizeof(T)];
+	auto check_range_error(size_type pos) const {
+#if _DEBUG
+		if (pos >= m_size)
+			throw std::out_of_range("static_vector_base subscript out of range");
+#endif
+	}
+
+protected:
+	T* m_data = nullptr;
 	std::size_t m_size = 0;
+	std::size_t m_capacity = 0;
+};
+
+template<typename T, std::size_t Capacity>
+class static_vector : public static_vector_base<T> {
+	template<typename T, std::size_t OtherCapacity>
+	friend class static_vector;
+
+	using base_t = static_vector_base<T>;
+
+public:
+	using value_type = typename base_t::value_type;
+	using size_type = typename base_t::size_type;
+	using difference_type = typename base_t::difference_type;
+	using reference = typename base_t::reference;
+	using const_reference = typename base_t::const_reference;
+	using pointer = typename base_t::pointer;
+	using const_pointer = typename base_t::const_pointer;
+	using iterator = typename base_t::iterator;
+	using const_iterator = typename base_t::const_iterator;
+	using reverse_iterator = typename base_t::reverse_iterator;
+	using const_reverse_iterator = typename base_t::const_reverse_iterator;
+
+public:
+	constexpr static_vector() noexcept : base_t(reinterpret_cast<pointer>(&m_storage[0]), Capacity) {}
+	
+	template<typename InputIt, typename = std::enable_if_t<!std::is_integral_v<InputIt>>>
+	constexpr static_vector(InputIt first, InputIt last) : static_vector() {
+		assign(first, last);
+	}
+	
+	constexpr static_vector(size_type count, const value_type& value) : static_vector() {
+		assign(count, value);
+	}
+	
+	constexpr static_vector(std::initializer_list<value_type> init) : static_vector(init.begin(), init.end()) {}
+	
+	constexpr static_vector(const static_vector& other) : static_vector(other.begin(), other.end()) {}
+	
+	constexpr static_vector(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) : static_vector() {
+		swap(other);
+	}
+	
+	~static_vector() noexcept(std::is_nothrow_destructible_v<T>) {}
+
+	// operations
+
+	constexpr auto& operator=(static_vector&& other) noexcept(std::is_nothrow_swappable_v<T>) {
+		swap(other);
+		return *this;
+	}
+
+	constexpr auto& operator=(const static_vector& other) {
+		assign(other.begin(), other.end());
+		return *this;
+	}
+
+	constexpr auto& operator=(std::initializer_list<value_type> ilist) {
+		assign(ilist.begin(), ilist.end());
+		return *this;
+	}
+
+	// element access
+
+	constexpr auto swap(static_vector& other) noexcept(std::is_nothrow_swappable_v<T>)->void {
+		base_t::swap(other);
+	}
+
+private:
+	alignas(T) std::byte m_storage[Capacity][sizeof(T)];
 };
 
 }
