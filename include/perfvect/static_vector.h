@@ -377,6 +377,7 @@ protected:
 	}
 
 	auto check_range_error(size_type pos) const {
+		(void)pos;
 #if _DEBUG
 		if (pos >= m_size)
 			throw std::out_of_range("static_vector_base subscript out of range");
