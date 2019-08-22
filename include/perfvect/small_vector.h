@@ -5,25 +5,14 @@
 #include "static_vector.h"
 #include <memory>
 #include <type_traits>
-#include <variant>
 #include <vector>
 
 namespace perfvect {
-
-// small_vector is an std::variant wrapper for static_vector and std::vector.
-// It allows interfacing with both vector variants as a single vector
-// static_vector will be used until the number of elements exceeds StaticCapacity.
-// After that, the std::vector will be used until the number of elements is reduced enough and
-// shrink_to_fit() is called.
-// Upon switching from vector to dynamic variants, all elements from the static vector are moved
-// to the dynamic vector. The dynamic vector starts off with a capacity of DynamicCapacity, or
-// higher if more elements are needed.
 
 template<typename T, typename Allocator = std::allocator<T>>
 class small_vector_base {
 	using StaticVec = static_vector_base<T>;
 	using DynamicVec = std::vector<T, Allocator>;
-	using Variant = std::variant<StaticVec*, DynamicVec>;
 	
 public:
 	using value_type = T;
@@ -439,7 +428,6 @@ class small_vector : public small_vector_base<T, Allocator> {
 	using base_t = small_vector_base<T, Allocator>;
 	using StaticVec = static_vector<T, StaticCapacity>;
 	using DynamicVec = std::vector<T, Allocator>;
-	using Variant = std::variant<StaticVec, DynamicVec>;
 	
 public:
 	using value_type = typename base_t::value_type;

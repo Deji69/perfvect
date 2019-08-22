@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <vector>
 #include <new>
-#include <variant>
 #include <type_traits>
 
 namespace perfvect {
