@@ -34,7 +34,10 @@ struct TestStruct {
 		++copyConstructed;
 		other.wasCopyConstructedFrom = true;
 	}
-	~TestStruct() { ++destructed; }
+	~TestStruct() {
+		++destructed;
+		if (onDestruct) onDestruct();
+	}
 
 	auto operator=(TestStruct&& other) noexcept->TestStruct& {
 		++assigned;
@@ -55,6 +58,7 @@ struct TestStruct {
 	}
 
 	int value = 0;
+	std::function<void()> onDestruct;
 	bool wasMoveConstructed = false;
 	bool wasMoveAssigned = false;
 	bool wasCopyConstructed = false;
