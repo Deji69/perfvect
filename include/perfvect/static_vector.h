@@ -51,8 +51,10 @@ public:
 	}
 
 	constexpr auto assign(size_type count, const value_type& value) {
+		if (m_size > count) destruct_elements(count);
+		std::fill_n(data(), m_size, value);
+		if (m_size < count) insert(end(), count - m_size, value);
 		m_size = count;
-		std::fill_n(data(), count, value);
 	}
 
 	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
@@ -79,8 +81,7 @@ public:
 	}
 
 	constexpr auto fill(const value_type& value) {
-		m_size = m_capacity;
-		std::fill_n(data(), m_size, value);
+		assign(m_capacity, value);
 	}
 
 	// iterators
@@ -224,7 +225,7 @@ public:
 		const auto off = static_cast<size_type>(pos - begin());
 		const auto oldsize = size();
 
-		std::fill(end(), end() + count, val);
+		std::uninitialized_fill_n(end(), count, val);
 		m_size = oldsize + count;
 
 		if (pos != end()) {
@@ -240,11 +241,10 @@ public:
 		auto myfirst = begin();
 		const auto off = static_cast<size_type>(pos - myfirst);
 		const auto oldsize = size();
-
-		for (; first != last; ++first) {
-			emplace_back(*first);
-		}
-
+		const auto count = std::distance(first, last);
+		
+		std::uninitialized_copy_n(first, count, end());
+		m_size += count;
 		std::rotate(myfirst + off, myfirst + oldsize, end());
 		return myfirst + off;
 	}
@@ -333,18 +333,18 @@ public:
 			std::swap(*ptr++, *otherPtr++);
 		}
 		if (other.m_size > m_size) {
+			other.destruct_elements(m_size);
+			
 			for (auto left = m_size; left < other.m_size; ++left) {
 				construct_element(left, std::move(*otherPtr++));
 			}
-
-			other.destruct_elements(m_size);
 		}
 		if (m_size > other.m_size) {
+			destruct_elements(other.m_size);
+			
 			for (auto left = other.m_size; left < m_size; ++left) {
 				other.construct_element(left, std::move(*ptr++));
 			}
-
-			destruct_elements(other.m_size);
 		}
 
 		std::swap(m_size, other.m_size);
@@ -352,18 +352,15 @@ public:
 
 protected:
 	constexpr auto get_address(size_type idx)->pointer {
-		return reinterpret_cast<pointer>(&m_data[idx]);
+		return reinterpret_cast<pointer>(std::addressof(m_data[idx]));
 	}
 
 	constexpr auto get_address(size_type idx) const->const_pointer {
-		return reinterpret_cast<const_pointer>(&m_data[idx]);
+		return reinterpret_cast<const_pointer>(std::addressof(m_data[idx]));
 	}
 
 	constexpr auto destruct_elements(size_type from) {
-		const auto end_ptr = m_data + m_size;
-		for (auto ptr = m_data + from; ptr != end_ptr; ++ptr) {
-			std::destroy_at(std::addressof(*ptr));
-		}
+		std::destroy_n(m_data + from, m_size - from);
 	}
 
 	template<typename... Args>

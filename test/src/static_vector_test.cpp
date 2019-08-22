@@ -46,7 +46,7 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 	}
 
 	SECTION("move construction swaps contained buffers") {
-		static_vector<TestStruct, 2> vec(2, TestStruct{});
+		static_vector<TestStruct, 2> vec(2, TestStruct{99});
 		TestStruct::setup();
 		static_vector<TestStruct, 2> other(std::move(vec));
 		CHECK(other.size() == 2);
@@ -94,13 +94,6 @@ TEST_CASE("static_vector::static_vector(iterator, iterator)") {
 	}
 
 	SECTION("non-trivial range construction") {
-		static auto destructed = 0;
-		struct TestStruct {
-			~TestStruct() {
-				++destructed;
-			}
-			int value = 0;
-		};
 		static const std::array<TestStruct, 3> data{{{1}, {2}, {3}}};
 		static_vector<TestStruct, 3> vec(data.begin(), data.end());
 		REQUIRE(vec.size() == 3);
@@ -209,11 +202,30 @@ TEST_CASE("static_vector::at(size_type)") {
 }
 
 TEST_CASE("static_vector::assign(size_type, const value_type&)") {
-	static_vector<int, 3> vec;
-	vec.assign(2, 99);
-	REQUIRE(vec.size() == 2);
-	CHECK(vec[0] == 99);
-	CHECK(vec[1] == 99);
+	SECTION("fill assignment") {
+		static_vector<int, 3> vec;
+		vec.assign(2, 99);
+		REQUIRE(vec.size() == 2);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+	}
+	
+	SECTION("old elements are overwritten or destructed") {
+		static_vector<TestStruct, 3> vec{1, 2, 3};
+		bool destructed = false;
+		vec[2].onDestruct = [&destructed](){ destructed = true; };
+		TestStruct::setup();
+		vec.assign(2, 99);
+		CHECK(destructed);
+		CHECK(TestStruct::copyAssigned == 3);
+	}
+
+	SECTION("new elements are initialised") {
+		static_vector<TestStruct, 2> vec{};
+		TestStruct::setup();
+		vec.assign(2, 99);
+		CHECK(TestStruct::copyConstructed == 2);
+	}
 }
 
 TEST_CASE("static_vector::assign(iterator, iterator)") {
