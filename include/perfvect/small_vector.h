@@ -234,36 +234,54 @@ public:
 	// modifiers
 
 	constexpr auto insert(const_iterator pos, const T& val)->iterator {
+		const auto off = it_to_offset(pos);
 		reserve(size() + 1);
-		return is_static() ? as_static().insert(pos, val) : as_dynamic().insert(pos, val);
+		return is_static()
+			? as_static().insert(pos, val)
+			: from_dyn_iterator(as_dynamic().insert(offset_to_dyn_it(off), val));
 	}
 
 	constexpr auto insert(const_iterator pos, T&& val)->iterator {
+		const auto off = it_to_offset(pos);
 		reserve(size() + 1);
-		return is_static() ? as_static().insert(pos, val) : as_dynamic().insert(pos, val);
+		if (is_static()) return as_static().insert(pos, std::forward<T>(val));
+		const auto it = offset_to_dyn_it(off);
+		return from_dyn_iterator(as_dynamic().insert(it, std::forward<T>(val)));
 	}
 
 	constexpr auto insert(const_iterator pos, const size_type count, const T& val) {
+		const auto off = it_to_offset(pos);
 		reserve(size() + count);
-		return is_static() ? as_static().insert(pos, count, val) : as_dynamic().insert(pos, count, val);
+		return is_static()
+			? as_static().insert(pos, count, val)
+			: from_dyn_iterator(as_dynamic().insert(offset_to_dyn_it(off), count, val));
 	}
 
 	template<typename Iter, typename = std::enable_if_t<detail::is_iterator_v<Iter>>>
 	auto insert(const_iterator pos, Iter first, Iter last)->iterator {
+		const auto off = it_to_offset(pos);
 		reserve(size() + std::distance(first, last));
-		return is_static() ? as_static().insert(pos, first, last) : as_dynamic().insert(pos, first, last);
+		return is_static()
+			? as_static().insert(pos, first, last)
+			: from_dyn_iterator(as_dynamic().insert(offset_to_dyn_it(off), first, last));
 	}
 
 	constexpr auto insert(const_iterator pos, std::initializer_list<T> list) {
+		const auto off = it_to_offset(pos);
 		reserve(size() + list.size());
-		return is_static() ? as_static().insert(pos, list) : as_dynamic().insert(pos, list);
+		return is_static()
+			? as_static().insert(pos, list)
+			: from_dyn_iterator(as_dynamic().insert(offset_to_dyn_it(off), list));
 	}
 
 	template<typename... Args>
 	auto emplace(const_iterator pos, Args&&... args)->iterator {
+		const auto off = it_to_offset(pos);
 		reserve(size() + 1);
-		if (is_static()) return as_static().insert(pos, std::forward<Args>(args)...);
-		return as_dynamic().insert(pos, std::forward<Args>(args)...);
+		if (is_static()) return as_static().emplace(pos, std::forward<Args>(args)...);
+		
+		const auto it = as_dynamic().emplace(offset_to_dyn_it(off), std::forward<Args>(args)...);
+		return from_dyn_iterator(it);
 	}
 
 	template<typename... Args>
@@ -291,7 +309,9 @@ public:
 	}
 
 	constexpr auto erase(const_iterator pos)->iterator {
-		return is_static() ? as_static().erase(pos) : as_dynamic().erase(pos);
+		return is_static()
+			? as_static().erase(pos)
+			: as_dynamic().erase(to_dyn_iterator(pos));
 	}
 
 	constexpr auto erase(const_iterator first, const_iterator last)->const_iterator {
@@ -302,7 +322,7 @@ public:
 		}
 
 		auto& vec = as_dynamic();
-		auto it = vec.erase(first, last);
+		auto it = vec.erase(to_dyn_iterator(first), to_dyn_iterator(last));
 		return it;
 	}
 
@@ -324,6 +344,28 @@ public:
 	}
 
 protected:
+	constexpr auto it_to_offset(const_iterator it)->size_type {
+		return std::distance(cbegin(), it);
+	}
+	
+	constexpr auto offset_to_it(size_type off)->iterator {
+		return begin() + off;
+	}
+	
+	constexpr auto offset_to_dyn_it(size_type off)->typename DynamicVec::iterator {
+		return as_dynamic().begin() + off;
+	}
+	
+	constexpr auto to_dyn_iterator(const_iterator it)->typename DynamicVec::iterator {
+		const auto beg = as_dynamic().begin();
+		return beg + std::distance(&*as_dynamic().cbegin(), &*it);
+	}
+	
+	constexpr auto from_dyn_iterator(typename DynamicVec::iterator it)->iterator {
+		const auto beg = as_dynamic().begin();
+		return iterator(&*beg + std::distance(beg, it));
+	}
+	
 	template<typename Alloc>
 	auto assign_vec(const small_vector_base<T, Alloc>& other) {
 		assign_vec(other.size(), other.cbegin(), other.cend());

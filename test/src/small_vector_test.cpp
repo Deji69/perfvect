@@ -458,3 +458,32 @@ TEST_CASE("small_vector::shrink_to_fit()") {
 	REQUIRE(vec.is_static());
 	CHECK(vec.capacity() == 2);
 }
+
+TEST_CASE("small_vector::insert(const_iterator, const T&)") {
+	auto vec = small_vector<int, 2, 4>();
+	vec.insert(vec.end(), 3);
+	REQUIRE(vec.size() == 1);
+	CHECK(vec.capacity() == 2);
+	
+	vec.insert(vec.begin(), 1);
+	REQUIRE(vec.size() == 2);
+	CHECK(vec.capacity() == 2);
+	
+	vec.insert(vec.begin() + 1, 2);
+	REQUIRE(vec.size() == 3);
+	CHECK(vec.capacity() == 4);
+	CHECK(vec[0] == 1);
+	CHECK(vec[1] == 2);
+	CHECK(vec[2] == 3);
+}
+
+TEST_CASE("small_vector::insert(const_iterator, T&&)") {
+	auto arr = std::array<TestStruct, 3>{};
+	auto vec = small_vector<TestStruct, 2, 4>();
+	auto it = vec.insert(vec.end(), std::move(arr[2]));
+	CHECK(it->wasMoveConstructed);
+	it = vec.insert(vec.begin(), std::move(arr[0]));
+	CHECK(it->wasMoveConstructed);
+	it = vec.insert(vec.begin() + 1, std::move(arr[1]));
+	CHECK(it->wasMoveConstructed);
+}
