@@ -44,7 +44,7 @@ TEST_CASE("vector(size_type, const value_type&)") {
 	CHECK(vec[2] == 99);
 }
 
-TEST_CASE("vector<std::initializer_list>") {
+TEST_CASE("vector(std::initializer_list)") {
 	vector<int> vec({1, 2, 3});
 	REQUIRE(vec.size() == 3);
 	CHECK(vec[0] == 1);
