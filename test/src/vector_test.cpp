@@ -1,4 +1,5 @@
 #include <perfvect/vector.h>
+#include <array>
 #include "catch.hpp"
 #include "helper.h"
 
@@ -24,6 +25,56 @@ TEST_CASE("vector(vector&&)") {
 	CHECK(vec.size() == 0);
 	CHECK(copy.size() == 3);
 	CHECK(TestStruct::moveConstructed == 3);
+}
+
+TEST_CASE("vector(iterator, iterator)") {
+	std::array arr{1, 2, 3};
+	vector<int> vec(arr.begin(), arr.end());
+	REQUIRE(vec.size() == 3);
+	CHECK(vec[0] == 1);
+	CHECK(vec[1] == 2);
+	CHECK(vec[2] == 3);
+}
+
+TEST_CASE("vector(size_type, const value_type&)") {
+	vector<int> vec(3, 99);
+	REQUIRE(vec.size() == 3);
+	CHECK(vec[0] == 99);
+	CHECK(vec[1] == 99);
+	CHECK(vec[2] == 99);
+}
+
+TEST_CASE("vector<std::initializer_list>") {
+	vector<int> vec({1, 2, 3});
+	REQUIRE(vec.size() == 3);
+	CHECK(vec[0] == 1);
+	CHECK(vec[1] == 2);
+	CHECK(vec[2] == 3);
+}
+
+TEST_CASE("vector::assign(size_type, const value_type&)") {
+	SECTION("basic fill assign") {
+		vector<TestStruct> vec;
+		vec.assign(3, 99);
+		CHECK(TestStruct::valueConstructed == 1);
+		CHECK(TestStruct::copyConstructed == 3);
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
+	
+	SECTION("overwrite fill assign") {
+		vector<TestStruct> vec(3, 0);
+		TestStruct::setup();
+		vec.assign(3, 99);
+		CHECK(TestStruct::valueConstructed == 1);
+		CHECK(TestStruct::copyAssigned == 3);
+		REQUIRE(vec.size() == 3);
+		CHECK(vec[0] == 99);
+		CHECK(vec[1] == 99);
+		CHECK(vec[2] == 99);
+	}
 }
 
 TEST_CASE("vector::reserve(size_type)") {
