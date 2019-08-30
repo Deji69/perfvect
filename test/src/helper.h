@@ -5,6 +5,8 @@
 // The static vars will count the total number of constructions/assignments/moves/copies since the last setup() call.
 struct TestStruct {
 	static unsigned int constructed;
+	static unsigned int defaultConstructed;
+	static unsigned int valueConstructed;
 	static unsigned int assigned;
 	static unsigned int destructed;
 	static unsigned int moveConstructed;
@@ -14,6 +16,8 @@ struct TestStruct {
 	
 	static auto setup() {
 		constructed = 0;
+		defaultConstructed = 0;
+		valueConstructed = 0;
 		assigned = 0;
 		destructed = 0;
 		moveConstructed = 0;
@@ -22,8 +26,14 @@ struct TestStruct {
 		copyAssigned = 0;
 	}
 
-	TestStruct() noexcept { ++constructed; }
-	TestStruct(int value)  noexcept: value(value) { ++constructed; }
+	TestStruct() noexcept : wasDefaultConstructed(true) {
+		++constructed;
+		++defaultConstructed;
+	}
+	TestStruct(int value)  noexcept : value(value), wasValueConstructed(true) {
+		++constructed;
+		++valueConstructed;
+	}
 	TestStruct(TestStruct&& other) noexcept : value(other.value), wasMoveConstructed(true) {
 		++constructed;
 		++moveConstructed;
@@ -56,9 +66,19 @@ struct TestStruct {
 		other.wasCopyAssignedFrom = true;
 		return *this;
 	}
+	
+	auto operator==(int value_) const noexcept->bool {
+		return value == value_;
+	}
+	
+	auto operator!=(int value_) const noexcept->bool {
+		return !(*this == value_);
+	}
 
 	int value = 0;
 	std::function<void()> onDestruct;
+	bool wasDefaultConstructed = false;
+	bool wasValueConstructed = false;
 	bool wasMoveConstructed = false;
 	bool wasMoveAssigned = false;
 	bool wasCopyConstructed = false;
@@ -70,6 +90,8 @@ struct TestStruct {
 };
 
 inline unsigned int TestStruct::constructed = 0;
+inline unsigned int TestStruct::defaultConstructed = 0;
+inline unsigned int TestStruct::valueConstructed = 0;
 inline unsigned int TestStruct::assigned = 0;
 inline unsigned int TestStruct::destructed = 0;
 inline unsigned int TestStruct::moveConstructed = 0;
