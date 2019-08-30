@@ -9,12 +9,11 @@
 using namespace std::literals;
 using namespace perfvect;
 
-TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), static_vector::capacity(), static_vector::empty()") {
+TEST_CASE("static_vector(), static_vector::size(), static_vector::capacity(), static_vector::empty()") {
 	SECTION("default constructor") {
 		static_vector<int, 8> vec;
 		CHECK(vec.size() == 0);
 		CHECK(vec.capacity() == 8u);
-		CHECK(vec.max_size() == 8u);
 		CHECK(vec.begin() == vec.end());
 		CHECK(vec.cbegin() == vec.cend());
 		CHECK(vec.rbegin() == vec.rend());
@@ -49,9 +48,9 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 		static_vector<TestStruct, 2> vec(2, TestStruct{99});
 		TestStruct::setup();
 		static_vector<TestStruct, 2> other(std::move(vec));
-		CHECK(other.size() == 2);
 		CHECK(TestStruct::constructed == 2);
 		CHECK(TestStruct::moveConstructed == 2);
+		REQUIRE(other.size() == 2);
 		CHECK(other[0].wasMoveConstructed);
 		CHECK(other[1].wasMoveConstructed);
 		CHECK(vec.empty());
@@ -60,7 +59,6 @@ TEST_CASE("static_vector(), static_vector::size(), static_vector::max_size(), st
 	SECTION("sanity check capacity methods") {
 		static_vector<int, 3> vec;
 		REQUIRE(vec.capacity() == 3);
-		REQUIRE(vec.max_size() == 3);
 		REQUIRE(vec.empty());
 		CHECK(vec.size() == 0);
 		vec.push_back(1);
@@ -217,7 +215,7 @@ TEST_CASE("static_vector::assign(size_type, const value_type&)") {
 		TestStruct::setup();
 		vec.assign(2, 99);
 		CHECK(destructed);
-		CHECK(TestStruct::copyAssigned == 3);
+		CHECK(TestStruct::copyAssigned == 2);
 	}
 
 	SECTION("new elements are initialised") {

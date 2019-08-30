@@ -58,9 +58,9 @@ TEST_CASE("small_vector(small_vector&&)") {
 		CHECK(copy.is_dynamic());
 		CHECK(copy.size() == 3);
 		CHECK(copy.capacity() == 4);
-		CHECK(vec.is_static());
+		CHECK(vec.is_dynamic());
 		CHECK(vec.size() == 0);
-		CHECK(vec.capacity() == 2);
+		CHECK(vec.capacity() == 4);
 	}
 }
 
@@ -99,7 +99,7 @@ TEST_CASE("small_vector(size_type, const T&)") {
 	SECTION("dynamic variant") {
 		small_vector<int, 3, 5> vec(4, 99);
 		CHECK(!vec.is_static());
-		CHECK(vec.capacity() == 5);
+		CHECK(vec.capacity() >= 5);
 		CHECK(vec.size() == 4);
 	}
 }
@@ -143,16 +143,21 @@ TEST_CASE("small_vector::operator=(small_vector&&)") {
 
 	SECTION("move dynamic vector") {
 		small_vector<TestStruct, 1, 3> vec({1, 2});
+		small_vector<TestStruct, 1, 3> copy({3, 4});
 		TestStruct::setup();
-		small_vector<TestStruct, 1, 3> copy(std::move(vec));
 
 		// std::vector buffers can be swapped so no per-element constructions/assignments occur
+		copy = std::move(vec);
 		CHECK(TestStruct::constructed == 0);
 		CHECK(TestStruct::assigned == 0);
-		CHECK(copy.size() == 2);
+		CHECK(vec.is_dynamic());
 		CHECK(copy.is_dynamic());
-		CHECK(vec.size() == 0);
-		CHECK(vec.is_static());
+		REQUIRE(vec.size() == 2);
+		REQUIRE(copy.size() == 2);
+		CHECK(vec[0].value == 3);
+		CHECK(vec[1].value == 4);
+		CHECK(copy[0].value == 1);
+		CHECK(copy[1].value == 2);
 	}
 }
 
@@ -185,8 +190,8 @@ TEST_CASE("small_vector::swap(small_vector&&)") {
 	small_vector<int, 2, 4> vec2{1, 2};
 	vec1.swap(vec2);
 	CHECK(vec1.size() == 2);
-	CHECK(vec1.capacity() == 2);
-	CHECK(vec1.is_static());
+	CHECK(vec1.capacity() == 4);
+	CHECK(vec1.is_dynamic());
 	CHECK(vec2.size() == 3);
 	CHECK(vec2.capacity() == 4);
 	CHECK(vec2.is_dynamic());
