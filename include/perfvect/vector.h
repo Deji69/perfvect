@@ -332,7 +332,7 @@ protected:
 
 	auto assign_hint(const size_type count, const value_type& val) {
 		if (m_size > count) destroy(count);
-		std::uninitialized_fill_n(begin(), m_size, val);
+		std::fill_n(begin(), count, val);
 		if (m_size < count) insert_hint(count - m_size, val);
 	}
 
