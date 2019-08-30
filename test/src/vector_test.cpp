@@ -27,6 +27,15 @@ TEST_CASE("vector(vector&&)") {
 	CHECK(TestStruct::moveConstructed == 3);
 }
 
+TEST_CASE("vector(const vector&)") {
+	vector<TestStruct> vec({1, 2, 3});
+	TestStruct::setup();
+	vector<TestStruct> copy(vec);
+	CHECK(vec.size() == 3);
+	CHECK(copy.size() == 3);
+	CHECK(TestStruct::copyConstructed == 3);
+}
+
 TEST_CASE("vector(iterator, iterator)") {
 	std::array arr{1, 2, 3};
 	vector<int> vec(arr.begin(), arr.end());
@@ -50,6 +59,14 @@ TEST_CASE("vector(std::initializer_list)") {
 	CHECK(vec[0] == 1);
 	CHECK(vec[1] == 2);
 	CHECK(vec[2] == 3);
+}
+
+TEST_CASE("~vector()") {
+	{
+		vector<TestStruct> vec(3, 99);
+		TestStruct::setup();
+	}
+	CHECK(TestStruct::destructed == 3);
 }
 
 TEST_CASE("vector::assign(size_type, const value_type&)") {

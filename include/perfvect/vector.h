@@ -45,7 +45,7 @@ protected:
 		: m_data(data), m_capacity(capacity) {}
 
 	~static_vector_base() noexcept(std::is_nothrow_destructible_v<T>) {
-		destroy_lazily();
+		if (m_data) destroy_lazily();
 	}
 
 public:
@@ -457,7 +457,14 @@ public:
 	}
 
 	template<typename Alloc = Allocator>
-	constexpr vector(const vector<T, Alloc>& other) : vector(other.begin(), other.end()) {}
+	constexpr vector(const vector<T, Alloc>& other) : vector() {
+		assign_hint(other.size(), other.cbegin(), other.cend());
+	}
+
+	constexpr vector(const vector& other) : vector() {
+		reallocate_at_least(other.size());
+		assign_hint(other.size(), other.cbegin(), other.cend());
+	}
 
 	template<typename Alloc = Allocator>
 	constexpr vector(vector<T, Alloc>&& other) noexcept(noexcept(swap(other))) : vector() {
@@ -465,7 +472,7 @@ public:
 	}
 	
 	~vector() noexcept(std::is_nothrow_destructible_v<T>) {
-		this->destroy_lazily();
+		deallocate();
 	}
 
 public:
@@ -508,11 +515,11 @@ public:
 
 	// capacity
 
-	constexpr auto is_static() const noexcept->bool {
+	[[nodiscard]] constexpr auto is_static() const noexcept->bool {
 		return this->m_data == m_alloc.staticStorage;
 	}
 
-	constexpr auto is_dynamic() const noexcept->bool {
+	[[nodiscard]] constexpr auto is_dynamic() const noexcept->bool {
 		return !is_static();
 	}
 
@@ -664,6 +671,7 @@ protected:
 			throw;
 		}
 	
+		this->destroy_lazily();
 		deallocate();
 		set_alloc(mem, new_cap);
 	}
