@@ -24,7 +24,7 @@
             "configurationProvider": "vector-of-bool.cmake-tools",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json",
             "compilerArgs": [
-                "/W4"
+                "W4"
             ]
         },
         {

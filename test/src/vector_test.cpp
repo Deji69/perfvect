@@ -94,6 +94,24 @@ TEST_CASE("vector::assign(size_type, const value_type&)") {
 	}
 }
 
+TEST_CASE("vector::assign(iterator, iterator)") {
+	std::array<TestStruct, 3> values = {1, 2, 3};
+	vector<TestStruct> vec;
+	TestStruct::setup();
+	
+	SECTION("copy iterator assign") {
+		vec.assign(values.begin(), values.end());
+		CHECK(vec.size() == 3);
+		CHECK(TestStruct::copyConstructed == 3);
+	}
+	
+	SECTION("move iterator assign") {
+		vec.assign(std::make_move_iterator(values.begin()), std::make_move_iterator(values.end()));
+		CHECK(vec.size() == 3);
+		CHECK(TestStruct::moveConstructed == 3);
+	}
+}
+
 TEST_CASE("vector::reserve(size_type)") {
 	auto vec = vector<TestStruct>();
 

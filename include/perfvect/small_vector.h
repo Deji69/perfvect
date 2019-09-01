@@ -83,18 +83,18 @@ public:
 	}
 
 	constexpr auto& operator=(const small_vector& other) {
-		base_t::assign(other);
+		base_t::operator=(other);
 		return *this;
 	}
 	
 	template<typename Alloc = std::allocator<T>>
 	constexpr auto& operator=(const vector<T, Alloc>& other) {
-		base_t::assign(other.begin(), other.end());;
+		base_t::operator=(other);
 		return *this;
 	}
 
 	constexpr auto& operator=(std::initializer_list<T> ilist) {
-		base_t::assign(ilist);
+		base_t::operator=(ilist);
 		return *this;
 	}
 

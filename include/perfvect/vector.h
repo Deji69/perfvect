@@ -317,16 +317,14 @@ protected:
 protected:
 	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
 	constexpr auto assign_hint(const size_type count, const InputIt first, const InputIt last) {
+		const auto assign_count = count < m_size ? count : m_size;
+		const auto dest = std::copy_n(first, assign_count, begin());
+		
 		if (count < m_size) {
-			std::copy_n(first, count, data());
 			destroy(count);
 		}
-		else {
-			auto dest = std::copy_n(first, m_size, begin());
-
-			if (count > m_size) {
-				insert(dest, first + m_size, last);
-			}
+		else if (count > m_size) {
+			insert(dest, first + m_size, last);
 		}
 	}
 
@@ -439,8 +437,7 @@ protected:
 public:
 	constexpr vector() noexcept : base_t(nullptr, 0) {};
 
-	explicit vector(const Allocator& alloc) noexcept : vector() {
-		m_alloc = alloc;
+	explicit vector(const Allocator& alloc) noexcept : vector(), m_alloc{alloc} {
 	}
 
 	template<typename InputIt, typename = std::enable_if_t<detail::is_iterator_v<InputIt>>>
@@ -463,7 +460,7 @@ public:
 
 	constexpr vector(const vector& other) : vector() {
 		reallocate_at_least(other.size());
-		assign_hint(other.size(), other.cbegin(), other.cend());
+		this->assign_hint(other.size(), other.cbegin(), other.cend());
 	}
 
 	template<typename Alloc = Allocator>
@@ -481,6 +478,11 @@ public:
 	template<typename Alloc = Allocator>
 	constexpr auto& operator=(vector<T, Alloc>&& other) noexcept(noexcept(swap(other))) {
 		swap(other);
+		return *this;
+	}
+	
+	constexpr auto& operator=(const vector& other) {
+		assign(other.begin(), other.end());
 		return *this;
 	}
 
