@@ -2,13 +2,21 @@
 
 A small set of vector containers built for improved performance over `std::vector` while maintaining usability and being free from extra dependencies. The libary is header only and easy to include in any project.
 
-This library contains 2 container types, `static_vector` and `small_vector`. These are similar to those seen in the Boost library, minus the dependencies on other Boost types and using the STL more instead.
+This library contains 2 main container types, `static_vector` and `small_vector`, which inherit from a base `vector` type capable of doing a certain set of operations. These are similar to those seen in the Boost library, minus the dependencies on other Boost types and using the STL more instead.
 
 ## Types
+
+### `perfvect::vector<T>`
+
+Essentially a `std::vector` which acts as an underlying base of `small_vector` without requiring awareness of the capacities.
 
 ### `perfvect::static_vector<T, Capacity>`
 
 A variably sized array container with a fixed capacity, free of allocations.
+
+### `perfvect::static_vector_base<T>`
+
+A base for `static_vector`, `vector` and `small_vector` that needs no awareness of the total capacity.
 
 ### `perfvect::small_vector<T, StaticCapacity = 16, DynamicCapacity = StaticCapacity>`
 
