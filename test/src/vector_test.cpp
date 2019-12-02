@@ -72,9 +72,11 @@ TEST_CASE("~vector()") {
 TEST_CASE("vector::assign(size_type, const value_type&)") {
 	SECTION("basic fill assign") {
 		vector<TestStruct> vec;
+		TestStruct::setup();
 		vec.assign(3, 99);
 		CHECK(TestStruct::valueConstructed == 1);
 		CHECK(TestStruct::copyConstructed == 3);
+		CHECK(TestStruct::copyAssigned == 0);
 		REQUIRE(vec.size() == 3);
 		CHECK(vec[0] == 99);
 		CHECK(vec[1] == 99);
