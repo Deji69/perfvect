@@ -344,6 +344,12 @@ protected:
 		std::uninitialized_fill_n(end(), count, val);
 		m_size += count;
 	}
+	
+	template<typename Iter, typename = std::enable_if_t<detail::is_iterator_v<Iter>>>
+	auto move_hint_n(const size_type count, const Iter first) {
+		std::uninitialized_move_n(first, count, end());
+		m_size += count;
+	}
 
 	template<typename Iter, typename = std::enable_if_t<detail::is_iterator_v<Iter>>>
 	auto insert_at_hint(const size_type count, const const_iterator pos, const Iter first, const Iter last)->iterator {
@@ -464,8 +470,10 @@ public:
 	}
 
 	template<typename Alloc = Allocator>
-	constexpr vector(vector<T, Alloc>&& other) noexcept(noexcept(swap(other))) : vector() {
-		swap(other);
+	constexpr vector(vector<T, Alloc>&& other) noexcept : vector() {
+		reallocate_at_least(other.size());
+		this->move_hint_n(other.size(), other.begin());
+		other.m_size = 0;
 	}
 	
 	~vector() noexcept(std::is_nothrow_destructible_v<T>) {
